@@ -16,22 +16,37 @@ function App() {
   useEffect(() => {
     const isTgCheck = typeof window !== 'undefined' && window.Telegram?.WebApp?.initData;
 
+    const isMobile = () => {
+      return /Android|iPhone/i.test(navigator.userAgent);
+    };
+
     if (isTgCheck) {
       WebApp.ready();
       WebApp.enableClosingConfirmation();
       WebApp.expand();
       WebApp.setHeaderColor('#111111');
 
-      if (isTgCheck.innerWidth <= 600) {
+      setIsTelegram(true);
+      document.body.style.backgroundColor = '#1a1a1e';
+
+      if (isMobile() && window.innerWidth < 600) {
         WebApp.requestFullscreen();
       }
-      
-      setIsTelegram(true);
-
-      document.body.style.backgroundColor = '#1a1a1e';
     }
+
+    const handleResize = () => {
+      if (isMobile() && window.innerWidth < 600) {
+        WebApp.requestFullscreen();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
-  
+
   return (
     <div className={styles.appContainer}>
       {isTelegram ? <InTg /> : <NoTg />}

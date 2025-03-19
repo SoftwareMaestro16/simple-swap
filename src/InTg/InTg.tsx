@@ -10,17 +10,20 @@ import {
     updateAmounts,
     toggleSwapDirection,
 } from '../utils/swapLogic';
-import { TON_PRICE_USD, SC_PRICE_USD, TON_TO_SC_RATE } from '../utils/constants';
+import { TON, JETTONS } from '../utils/constants';
 
 function InTg() {
     const [tonConnectUI] = useTonConnectUI();
     const [isLoading, setIsLoading] = useState(false);
-    const [_, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(true);
     const wallet = useTonWallet();
     const [tonAmount, setTonAmount] = useState('');
-    const [scAmount, setScAmount] = useState('');
-    const [isTonToSc, setIsTonToSc] = useState(true);
+    const [jettonAmount, setJettonAmount] = useState('');
+    const [isTonToJetton, setIsTonToJetton] = useState(true);
+    const [selectedJetton, setSelectedJetton] = useState(JETTONS[0]); // Default to the first jetton (SC)
+    const [showJettonListTop, setShowJettonListTop] = useState(false); // For the top field
+    const [showJettonListBottom, setShowJettonListBottom] = useState(false); // For the bottom field
 
     const tonClient = initializeTonClient();
     const factory = setupFactory(tonClient);
@@ -28,20 +31,50 @@ function InTg() {
     useEffect(() => {
         const checkReadiness = async () => {
             try {
-                await checkPoolAndVaultReadiness(factory);
+                await checkPoolAndVaultReadiness(factory, selectedJetton.address);
                 setIsReady(true);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Неизвестная ошибка при инициализации');
+                setIsReady(true);
+                console.log('norm');
+                
             }
         };
         checkReadiness();
-    }, [factory]);
+    }, [factory, selectedJetton]);
+
+    const handleJettonSelect = (jetton: typeof JETTONS[0]) => {
+        console.log('Selected jetton:', jetton.name);
+        setSelectedJetton(jetton);
+        setJettonAmount('');
+        setTonAmount('');
+        setShowJettonListTop(false);
+        setShowJettonListBottom(false);
+    };
+
+    const toggleJettonListTop = () => {
+        if (!isTonToJetton) { // Only toggle if the top field is the jetton field
+            console.log('Toggling jetton list for top field, current state:', showJettonListTop);
+            setShowJettonListTop((prev) => !prev);
+            setShowJettonListBottom(false); // Close the bottom list if open
+        }
+    };
+
+    const toggleJettonListBottom = () => {
+        if (isTonToJetton) { // Only toggle if the bottom field is the jetton field
+            console.log('Toggling jetton list for bottom field, current state:', showJettonListBottom);
+            setShowJettonListBottom((prev) => !prev);
+            setShowJettonListTop(false); // Close the top list if open
+        }
+    };
 
     return (
         <>
-            <TonConnectButton />
+            <div className={styles.tc}>
+                <TonConnectButton />
+            </div>
             <div className={styles.swapContainer}>
-                <h2>Swap</h2>
+                <h2>Simple Swap</h2>
                 
                 <div>
                     {isReady && (
@@ -50,21 +83,38 @@ function InTg() {
                                 <div className={styles['input-wrapper']}>
                                     <input
                                         type="number"
-                                        value={isTonToSc ? tonAmount : scAmount}
-                                        onChange={(e) => updateAmounts(e.target.value, true, isTonToSc, setTonAmount, setScAmount, TON_TO_SC_RATE)}
+                                        value={isTonToJetton ? tonAmount : jettonAmount}
+                                        onChange={(e) => updateAmounts(e.target.value, true, isTonToJetton, setTonAmount, setJettonAmount, selectedJetton.rateToTon)}
                                         placeholder="0.0"
                                     />
-                                    <div className={styles.currencyContainer}>
-                                        <h2>{isTonToSc ? 'TON' : 'SC'}</h2>
+                                    <div
+                                        className={styles.currencyContainer}
+                                        onClick={toggleJettonListTop}
+                                    >
+                                        <h2>{isTonToJetton ? TON.name : selectedJetton.name}</h2>
                                         <img
-                                            src={isTonToSc ? 'https://cryptologos.cc/logos/toncoin-ton-logo.png' : 'https://simple-coin.xyz/sc.png'}
-                                            alt={isTonToSc ? 'TON' : 'SC'}
+                                            src={isTonToJetton ? TON.image : selectedJetton.image}
+                                            alt={isTonToJetton ? TON.name : selectedJetton.name}
                                             className={styles.currencyImage}
                                         />
                                     </div>
+                                    {showJettonListTop && !isTonToJetton && (
+                                        <div className={styles.jettonList}>
+                                            {JETTONS.map((jetton) => (
+                                                <div
+                                                    key={jetton.address}
+                                                    className={styles.jettonItem}
+                                                    onClick={() => handleJettonSelect(jetton)}
+                                                >
+                                                    <img src={jetton.image} alt={jetton.name} className={styles.jettonImage} />
+                                                    <span>{jetton.name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className={styles.price}>
-                                    ≈ ${(isTonToSc ? (parseFloat(tonAmount) * TON_PRICE_USD || 0) : (parseFloat(scAmount) * SC_PRICE_USD || 0)).toFixed(2)}
+                                    ≈ ${(isTonToJetton ? (parseFloat(tonAmount) * TON.priceUsd || 0) : (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0)).toFixed(2)}
                                 </div>
                             </div>
 
@@ -72,7 +122,7 @@ function InTg() {
                                 <div className={styles.dividerLine}></div>
                                 <button
                                     className={styles['swap-button']}
-                                    onClick={() => toggleSwapDirection(setIsTonToSc, setTonAmount, setScAmount)}
+                                    onClick={() => toggleSwapDirection(setIsTonToJetton, setTonAmount, setJettonAmount)}
                                 >
                                     ↕
                                 </button>
@@ -83,28 +133,47 @@ function InTg() {
                                 <div className={`${styles['input-wrapper']} ${styles.readonly}`}>
                                     <input
                                         type="number"
-                                        value={isTonToSc ? scAmount : tonAmount}
+                                        value={isTonToJetton ? jettonAmount : tonAmount}
                                         readOnly
                                         placeholder="0.0"
                                     />
-                                    <div className={styles.currencyContainer}>
-                                        <h2>{isTonToSc ? 'SC' : 'TON'}</h2>
+                                    <div
+                                        className={styles.currencyContainer}
+                                        onClick={toggleJettonListBottom}
+                                    >
+                                        <h2>{isTonToJetton ? selectedJetton.name : TON.name}</h2>
                                         <img
-                                            src={isTonToSc ? 'https://simple-coin.xyz/sc.png' : 'https://cryptologos.cc/logos/toncoin-ton-logo.png'}
-                                            alt={isTonToSc ? 'SC' : 'TON'}
+                                            src={isTonToJetton ? selectedJetton.image : TON.image}
+                                            alt={isTonToJetton ? selectedJetton.name : TON.name}
                                             className={styles.currencyImage}
                                         />
                                     </div>
+                                    {showJettonListBottom && isTonToJetton && (
+                                        <div className={styles.jettonList}>
+                                            {JETTONS.map((jetton) => (
+                                                <div
+                                                    key={jetton.address}
+                                                    className={styles.jettonItem}
+                                                    onClick={() => handleJettonSelect(jetton)}
+                                                >
+                                                    <img src={jetton.image} alt={jetton.name} className={styles.jettonImage} />
+                                                    <span>{jetton.name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className={styles.price}>
-                                    ≈ ${(isTonToSc ? (parseFloat(scAmount) * SC_PRICE_USD || 0) : (parseFloat(tonAmount) * TON_PRICE_USD || 0)).toFixed(2)}
+                                    ≈ ${(isTonToJetton ? (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0) : (parseFloat(tonAmount) * TON.priceUsd || 0)).toFixed(2)}
                                 </div>
                             </div>
 
-                            <div className={styles.rate}>1 TON = {TON_TO_SC_RATE.toFixed(2)} SC</div>
+                            <div className={styles.rate}>1 TON = {selectedJetton.rateToTon.toFixed(2)} {selectedJetton.name}</div>
                             <button
-                                onClick={isTonToSc ? () => handleSwapTon(tonConnectUI, wallet, tonAmount, setError, setIsLoading, factory) : () => handleSwapJetton(tonConnectUI, wallet, scAmount, setError, setIsLoading, factory)}
-                                disabled={isLoading || !tonConnectUI.connected || (!tonAmount && !scAmount)}
+                                onClick={isTonToJetton
+                                    ? () => handleSwapTon(tonConnectUI, wallet, tonAmount, setError, setIsLoading, factory, selectedJetton.address)
+                                    : () => handleSwapJetton(tonConnectUI, wallet, jettonAmount, setError, setIsLoading, factory, selectedJetton.address)}
+                                disabled={isLoading || !tonConnectUI.connected || (!tonAmount && !jettonAmount)}
                             >
                                 {isLoading ? 'Выполняется...' : `Swap`}
                             </button>

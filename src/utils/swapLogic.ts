@@ -2,7 +2,7 @@ import { Factory, Asset, PoolType, ReadinessStatus } from '@dedust/sdk';
 import { Address, TonClient4, toNano, beginCell } from '@ton/ton';
 import { toUserFriendlyAddress } from '@tonconnect/ui-react';
 import { getJettonWalletAddress } from '../tonapi';
-import { FACTORY_ADDRESS, SIMPLE_COIN_ADDRESS, GAS_AMOUNT_TON, GAS_AMOUNT_JETTON, TON_CLIENT_ENDPOINT, TON_TO_SC_RATE } from './constants';
+import { FACTORY_ADDRESS, GAS_AMOUNT_TON, GAS_AMOUNT_JETTON, TON_CLIENT_ENDPOINT } from './constants';
 
 export const initializeTonClient = () => new TonClient4({ endpoint: TON_CLIENT_ENDPOINT });
 
@@ -11,15 +11,22 @@ export const setupFactory = (tonClient: TonClient4) => {
     return tonClient.open(Factory.createFromAddress(factoryAddress));
 };
 
-export const checkPoolAndVaultReadiness = async (factory: any) => {
+export const checkPoolAndVaultReadiness = async (factory: any, jettonAddress: string) => {
+    console.log('Checking pool and vault readiness for jetton:', jettonAddress);
     const tonVault = await factory.getNativeVault();
-    const pool = await factory.getPool(PoolType.VOLATILE, [Asset.native(), Asset.jetton(Address.parse(SIMPLE_COIN_ADDRESS))]);
+    const pool = await factory.getPool(PoolType.VOLATILE, [Asset.native(), Asset.jetton(Address.parse(jettonAddress))]);
 
-    if ((await pool.getReadinessStatus()) !== ReadinessStatus.READY) {
-        throw new Error('Пул TON/SCALE не существует');
+    const poolStatus = await pool.getReadinessStatus();
+    const vaultStatus = await tonVault.getReadinessStatus();
+
+    console.log('Pool readiness status:', poolStatus);
+    console.log('Vault readiness status:', vaultStatus);
+
+    if (poolStatus !== ReadinessStatus.READY) {
+        throw new Error(`Пул TON/${jettonAddress} не существует или не готов`);
     }
-    if ((await tonVault.getReadinessStatus()) !== ReadinessStatus.READY) {
-        throw new Error('TON Vault не существует');
+    if (vaultStatus !== ReadinessStatus.READY) {
+        throw new Error('TON Vault не существует или не готов');
     }
     return { tonVault, pool };
 };
@@ -30,8 +37,13 @@ export const handleSwapTon = async (
     tonAmount: string,
     setError: (error: string | null) => void,
     setIsLoading: (loading: boolean) => void,
-    factory: any
+    factory: any,
+    jettonAddress: string
 ) => {
+    if (!tonConnectUI) {
+        setError('TonConnect UI не инициализирован');
+        return;
+    }
     if (!tonConnectUI.connected || !wallet) {
         setError('Сначала подключите кошелек');
         return;
@@ -42,7 +54,7 @@ export const handleSwapTon = async (
         setError(null);
 
         const tonVault = await factory.getNativeVault();
-        const pool = await factory.getPool(PoolType.VOLATILE, [Asset.native(), Asset.jetton(Address.parse(SIMPLE_COIN_ADDRESS))]);
+        const pool = await factory.getPool(PoolType.VOLATILE, [Asset.native(), Asset.jetton(Address.parse(jettonAddress))]);
 
         if (!tonVault || !pool) {
             throw new Error('Не удалось получить данные о вольте или пуле');
@@ -73,15 +85,17 @@ export const handleSwapTon = async (
         const transaction = {
             validUntil: Math.floor(Date.now() / 1000) + 60,
             messages: [{
-                address: tonVault.address.toString(), 
+                address: tonVault.address.toString(),
                 amount: (amountIn + gasAmount).toString(),
                 payload: swapPayload.toBoc().toString('base64')
             }]
         };
 
+        console.log('Sending TON-to-Jetton transaction:', transaction);
         await tonConnectUI.sendTransaction(transaction);
     } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ошибка при выполнении свопа');
+        console.error('Error in handleSwapTon:', err);
+        setError(err instanceof Error ? err.message : 'Ошибка при выполнении свопа TON-to-Jetton');
     } finally {
         setIsLoading(false);
     }
@@ -90,26 +104,37 @@ export const handleSwapTon = async (
 export const handleSwapJetton = async (
     tonConnectUI: any,
     wallet: any,
-    scAmount: string,
+    jettonAmount: string,
     setError: (error: string | null) => void,
     setIsLoading: (loading: boolean) => void,
-    factory: any
+    factory: any,
+    jettonAddress: string
 ) => {
+    if (!tonConnectUI) {
+        setError('TonConnect UI не инициализирован');
+        return;
+    }
     if (!tonConnectUI.connected || !wallet) {
         setError('Сначала подключите кошелек');
         return;
     }
 
-    const jwAddress = await getJettonWalletAddress(Address.parse(SIMPLE_COIN_ADDRESS).toRawString(), wallet!.account.address);
-
     try {
         setIsLoading(true);
         setError(null);
 
-        const jettonVault = await factory.getJettonVault(Address.parse(SIMPLE_COIN_ADDRESS));
-        const pool = await factory.getPool(PoolType.VOLATILE, [Asset.native(), Asset.jetton(Address.parse(SIMPLE_COIN_ADDRESS))]);
+        console.log('Fetching jetton wallet address for:', jettonAddress, 'and wallet:', wallet.account.address);
+        const jwAddress = await getJettonWalletAddress(Address.parse(jettonAddress).toRawString(), wallet.account.address);
+        console.log('Jetton wallet address:', jwAddress.toString());
 
-        const amountIn = toNano(scAmount || '0');
+        const jettonVault = await factory.getJettonVault(Address.parse(jettonAddress));
+        const pool = await factory.getPool(PoolType.VOLATILE, [Asset.native(), Asset.jetton(Address.parse(jettonAddress))]);
+
+        if (!jettonVault || !pool) {
+            throw new Error('Не удалось получить данные о jetton vault или пуле');
+        }
+
+        const amountIn = toNano(jettonAmount || '0');
         const gasAmount = toNano(GAS_AMOUNT_JETTON);
 
         const forwardPayload = beginCell()
@@ -150,9 +175,11 @@ export const handleSwapJetton = async (
             }]
         };
 
+        console.log('Sending Jetton-to-TON transaction:', transaction);
         await tonConnectUI.sendTransaction(transaction);
     } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ошибка при выполнении свопа');
+        console.error('Error in handleSwapJetton:', err);
+        setError(err instanceof Error ? err.message : 'Ошибка при выполнении свопа Jetton-to-TON');
     } finally {
         setIsLoading(false);
     }
@@ -161,30 +188,30 @@ export const handleSwapJetton = async (
 export const updateAmounts = (
     value: string,
     isTopField: boolean,
-    isTonToSc: boolean,
+    isTonToJetton: boolean,
     setTonAmount: (value: string) => void,
-    setScAmount: (value: string) => void,
-    tonToScRate: number = TON_TO_SC_RATE 
+    setJettonAmount: (value: string) => void,
+    rateToTon: number
 ) => {
     if (isTopField) {
-        if (isTonToSc) {
+        if (isTonToJetton) {
             setTonAmount(value);
             const ton = parseFloat(value) || 0;
-            setScAmount((ton * tonToScRate).toFixed(4));
+            setJettonAmount((ton * rateToTon).toFixed(4));
         } else {
-            setScAmount(value);
-            const sc = parseFloat(value) || 0;
-            setTonAmount((sc / tonToScRate).toFixed(4));
+            setJettonAmount(value);
+            const jetton = parseFloat(value) || 0;
+            setTonAmount((jetton / rateToTon).toFixed(4));
         }
     }
 };
 
 export const toggleSwapDirection = (
-    setIsTonToSc: (value: (prev: boolean) => boolean) => void,
+    setIsTonToJetton: (value: (prev: boolean) => boolean) => void,
     setTonAmount: (value: string) => void,
-    setScAmount: (value: string) => void
+    setJettonAmount: (value: string) => void
 ) => {
-    setIsTonToSc((prev: boolean) => !prev);
+    setIsTonToJetton((prev: boolean) => !prev);
     setTonAmount('');
-    setScAmount('');
+    setJettonAmount('');
 };

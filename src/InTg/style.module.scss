@@ -1,3 +1,10 @@
+.tc {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 5px;
+}
+
 .swapContainer {
     position: relative;
     padding: 20px;
@@ -14,6 +21,13 @@
         margin-bottom: 15px;
     }
 
+    .error {
+        color: #ff4444;
+        text-align: center;
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
+
     .swapFields {
         background: #2a2a2a;
         border-radius: 15px;
@@ -21,7 +35,8 @@
         margin-bottom: 20px;
 
         .field {
-            margin-bottom: 5px; // Reduced margin to decrease spacing
+            margin-bottom: 5px;
+            position: relative;
 
             .input-wrapper {
                 display: flex;
@@ -41,13 +56,12 @@
                     text-align: left;
                     width: 100%;
 
-                    // Remove increment/decrement arrows
                     &::-webkit-outer-spin-button,
                     &::-webkit-inner-spin-button {
                         -webkit-appearance: none;
                         margin: 0;
                     }
-                    -moz-appearance: textfield; // For Firefox
+                    -moz-appearance: textfield;
 
                     &::placeholder {
                         color: #ffffff;
@@ -62,14 +76,15 @@
                 .currencyContainer {
                     display: flex;
                     align-items: center;
-                    background: #333; // Darker background
-                    border-radius: 8px; // Border radius for the container
-                    padding: 5px 10px; // Padding inside the container
+                    background: #333;
+                    border-radius: 8px;
+                    padding: 5px 10px;
                     margin-right: 10px;
+                    cursor: pointer;
 
                     h2 {
-                        font-size: 16px; // Adjust font size for h2
-                        margin: 0 8px 0 0; // Space between h2 and img
+                        font-size: 16px;
+                        margin: 0 8px 0 0;
                         color: #ccc;
                     }
 
@@ -86,6 +101,44 @@
                     color: #ccc;
                 }
             }
+
+            .jettonList {
+                position: absolute;
+                top: calc(100% + 5px); 
+                right: 10px;
+                background: #333;
+                border-radius: 8px;
+                padding: 10px;
+                z-index: 1000;
+                width: 150px;
+                max-height: 200px;
+                overflow-y: auto;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+
+                .jettonItem {
+                    display: flex;
+                    align-items: center;
+                    padding: 8px;
+                    cursor: pointer;
+                    border-radius: 5px;
+
+                    &:hover {
+                        background: #444;
+                    }
+
+                    .jettonImage {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 50%;
+                        margin-right: 8px;
+                    }
+
+                    span {
+                        font-size: 14px;
+                        color: #fff;
+                    }
+                }
+            }
         }
 
         .swapDivider {
@@ -98,7 +151,7 @@
                 flex: 1;
                 height: 1px;
                 background: #555;
-                margin: 0 5px; // 5px gap on either side of the swap button
+                margin: 0 5px;
             }
 
             .swap-button {
@@ -121,7 +174,7 @@
             font-size: 14px;
             color: #888;
             margin-top: 5px;
-            margin-left: 5px;
+            margin-left: 15px;
         }
     }
 
