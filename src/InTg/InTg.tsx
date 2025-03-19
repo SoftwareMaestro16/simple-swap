@@ -15,7 +15,7 @@ import { TON, JETTONS } from '../utils/constants';
 function InTg() {
     const [tonConnectUI] = useTonConnectUI();
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [_, setError] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(true);
     const wallet = useTonWallet();
     const [tonAmount, setTonAmount] = useState('');
