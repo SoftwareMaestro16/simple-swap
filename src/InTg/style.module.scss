@@ -1,0 +1,155 @@
+.swapContainer {
+    position: relative;
+    padding: 20px;
+    max-width: 450px;
+    margin: 0 auto;
+    background: #1a1a1a;
+    border-radius: 15px;
+    color: #fff;
+    font-family: Arial, sans-serif;
+
+    h2 {
+        text-align: center;
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
+
+    .swapFields {
+        background: #2a2a2a;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+
+        .field {
+            margin-bottom: 5px; // Reduced margin to decrease spacing
+
+            .input-wrapper {
+                display: flex;
+                align-items: center;
+                background: transparent;
+                border: none;
+                overflow: hidden;
+                position: relative;
+
+                input {
+                    flex: 1;
+                    padding: 10px 2px;
+                    background: transparent;
+                    border: none;
+                    color: #fff;
+                    font-size: 23px;
+                    text-align: left;
+                    width: 100%;
+
+                    // Remove increment/decrement arrows
+                    &::-webkit-outer-spin-button,
+                    &::-webkit-inner-spin-button {
+                        -webkit-appearance: none;
+                        margin: 0;
+                    }
+                    -moz-appearance: textfield; // For Firefox
+
+                    &::placeholder {
+                        color: #ffffff;
+                    }
+
+                    &:focus {
+                        outline: none;
+                        box-shadow: none;
+                    }
+                }
+
+                .currencyContainer {
+                    display: flex;
+                    align-items: center;
+                    background: #333; // Darker background
+                    border-radius: 8px; // Border radius for the container
+                    padding: 5px 10px; // Padding inside the container
+                    margin-right: 10px;
+
+                    h2 {
+                        font-size: 16px; // Adjust font size for h2
+                        margin: 0 8px 0 0; // Space between h2 and img
+                        color: #ccc;
+                    }
+
+                    .currencyImage {
+                        width: 24px;
+                        height: 24px;
+                        border-radius: 50%;
+                    }
+                }
+            }
+
+            .input-wrapper.readonly {
+                input {
+                    color: #ccc;
+                }
+            }
+        }
+
+        .swapDivider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 8px 0;
+
+            .dividerLine {
+                flex: 1;
+                height: 1px;
+                background: #555;
+                margin: 0 5px; // 5px gap on either side of the swap button
+            }
+
+            .swap-button {
+                background: none;
+                border: none;
+                font-size: 24px;
+                color: #888;
+                cursor: pointer;
+                padding: 0;
+                width: 40px;
+                text-align: center;
+
+                &:hover {
+                    color: #fff;
+                }
+            }
+        }
+
+        .price {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+            margin-left: 5px;
+        }
+    }
+
+    .rate {
+        text-align: center;
+        font-size: 14px;
+        color: #888;
+        margin-bottom: 15px;
+    }
+
+    button {
+        width: 100%;
+        padding: 14px;
+        background: #ff5722;
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        transition: background 0.3s;
+
+        &:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        &:not(:disabled):hover {
+            background: #e64a19;
+        }
+    }
+}
