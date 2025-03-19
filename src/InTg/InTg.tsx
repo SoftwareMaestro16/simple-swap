@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TonConnectButton, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import styles from './style.module.scss';
 import {
@@ -21,9 +21,14 @@ function InTg() {
     const [tonAmount, setTonAmount] = useState('');
     const [jettonAmount, setJettonAmount] = useState('');
     const [isTonToJetton, setIsTonToJetton] = useState(true);
-    const [selectedJetton, setSelectedJetton] = useState(JETTONS[0]); // Default to the first jetton (SC)
-    const [showJettonListTop, setShowJettonListTop] = useState(false); // For the top field
-    const [showJettonListBottom, setShowJettonListBottom] = useState(false); // For the bottom field
+    const [selectedJetton, setSelectedJetton] = useState(JETTONS[0]);
+    const [showJettonListTop, setShowJettonListTop] = useState(false);
+    const [showJettonListBottom, setShowJettonListBottom] = useState(false);
+
+    const topRef = useRef<HTMLDivElement>(null);
+    const bottomRef = useRef<HTMLDivElement>(null);
+    const jettonListTopRef = useRef<HTMLDivElement>(null);
+    const jettonListBottomRef = useRef<HTMLDivElement>(null);
 
     const tonClient = initializeTonClient();
     const factory = setupFactory(tonClient);
@@ -34,14 +39,42 @@ function InTg() {
                 await checkPoolAndVaultReadiness(factory, selectedJetton.address);
                 setIsReady(true);
             } catch (err) {
-                setError(err instanceof Error ? err.message : 'Неизвестная ошибка при инициализации');
+                setError(err instanceof Error ? err.message : 'Unknown error during initialization');
                 setIsReady(true);
                 console.log('norm');
-                
             }
         };
         checkReadiness();
     }, [factory, selectedJetton]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+
+            if (
+                topRef.current &&
+                jettonListTopRef.current &&
+                !topRef.current.contains(target) &&
+                !jettonListTopRef.current.contains(target)
+            ) {
+                setShowJettonListTop(false);
+            }
+
+            if (
+                bottomRef.current &&
+                jettonListBottomRef.current &&
+                !bottomRef.current.contains(target) &&
+                !jettonListBottomRef.current.contains(target)
+            ) {
+                setShowJettonListBottom(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const handleJettonSelect = (jetton: typeof JETTONS[0]) => {
         console.log('Selected jetton:', jetton.name);
@@ -53,19 +86,15 @@ function InTg() {
     };
 
     const toggleJettonListTop = () => {
-        if (!isTonToJetton) { // Only toggle if the top field is the jetton field
-            console.log('Toggling jetton list for top field, current state:', showJettonListTop);
-            setShowJettonListTop((prev) => !prev);
-            setShowJettonListBottom(false); // Close the bottom list if open
-        }
+        console.log('toggleJettonListTop called');
+        setShowJettonListTop((prev) => !prev);
+        setShowJettonListBottom(false);
     };
 
     const toggleJettonListBottom = () => {
-        if (isTonToJetton) { // Only toggle if the bottom field is the jetton field
-            console.log('Toggling jetton list for bottom field, current state:', showJettonListBottom);
-            setShowJettonListBottom((prev) => !prev);
-            setShowJettonListTop(false); // Close the top list if open
-        }
+        console.log('toggleJettonListBottom called');
+        setShowJettonListBottom((prev) => !prev);
+        setShowJettonListTop(false);
     };
 
     return (
@@ -75,7 +104,12 @@ function InTg() {
             </div>
             <div className={styles.swapContainer}>
                 <h2>Simple Swap</h2>
-                
+                <div className={styles.marqueeContainer}>
+                    <div className={styles.marquee}>
+                        Simple Swap offers lower fees for exchanges. Be cautious: reward tokens may have additional swap percentages.
+                    </div>
+                </div>
+
                 <div>
                     {isReady && (
                         <div className={styles.swapFields}>
@@ -88,8 +122,9 @@ function InTg() {
                                         placeholder="0.0"
                                     />
                                     <div
+                                        ref={topRef}
                                         className={styles.currencyContainer}
-                                        onClick={toggleJettonListTop}
+                                        onClick={!isTonToJetton ? toggleJettonListTop : undefined}
                                     >
                                         <h2>{isTonToJetton ? TON.name : selectedJetton.name}</h2>
                                         <img
@@ -99,15 +134,15 @@ function InTg() {
                                         />
                                     </div>
                                     {showJettonListTop && !isTonToJetton && (
-                                        <div className={styles.jettonList}>
+                                        <div ref={jettonListTopRef} className={styles.jettonList}>
                                             {JETTONS.map((jetton) => (
                                                 <div
                                                     key={jetton.address}
                                                     className={styles.jettonItem}
                                                     onClick={() => handleJettonSelect(jetton)}
                                                 >
-                                                    <img src={jetton.image} alt={jetton.name} className={styles.jettonImage} />
                                                     <span>{jetton.name}</span>
+                                                    <img src={jetton.image} alt={jetton.name} className={styles.jettonImage} />
                                                 </div>
                                             ))}
                                         </div>
@@ -138,8 +173,9 @@ function InTg() {
                                         placeholder="0.0"
                                     />
                                     <div
+                                        ref={bottomRef}
                                         className={styles.currencyContainer}
-                                        onClick={toggleJettonListBottom}
+                                        onClick={isTonToJetton ? toggleJettonListBottom : undefined}
                                     >
                                         <h2>{isTonToJetton ? selectedJetton.name : TON.name}</h2>
                                         <img
@@ -149,15 +185,15 @@ function InTg() {
                                         />
                                     </div>
                                     {showJettonListBottom && isTonToJetton && (
-                                        <div className={styles.jettonList}>
+                                        <div ref={jettonListBottomRef} className={styles.jettonList}>
                                             {JETTONS.map((jetton) => (
                                                 <div
                                                     key={jetton.address}
                                                     className={styles.jettonItem}
                                                     onClick={() => handleJettonSelect(jetton)}
                                                 >
-                                                    <img src={jetton.image} alt={jetton.name} className={styles.jettonImage} />
                                                     <span>{jetton.name}</span>
+                                                    <img src={jetton.image} alt={jetton.name} className={styles.jettonImage} />
                                                 </div>
                                             ))}
                                         </div>
@@ -175,7 +211,7 @@ function InTg() {
                                     : () => handleSwapJetton(tonConnectUI, wallet, jettonAmount, setError, setIsLoading, factory, selectedJetton.address)}
                                 disabled={isLoading || !tonConnectUI.connected || (!tonAmount && !jettonAmount)}
                             >
-                                {isLoading ? 'Выполняется...' : `Swap`}
+                                {isLoading ? 'Processing...' : `Swap`}
                             </button>
                         </div>
                     )}

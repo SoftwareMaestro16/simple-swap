@@ -14,11 +14,33 @@
     border-radius: 15px;
     color: #fff;
     font-family: Arial, sans-serif;
+    overflow: visible;
 
     h2 {
         text-align: center;
-        font-size: 28px;
+        font-size: 29px;
+        margin-bottom: 25px; 
+    }
+
+    .marqueeContainer {
+        display: flex;
+        align-items: center;
+        height: 32px; 
+        overflow: hidden;
+        background: linear-gradient(90deg, #ffd700, #ffaa33, #ffd700);
+        background-size: 200% 100%;
+        animation: gradientShift 3s ease infinite;
+        border-radius: 5px;
         margin-bottom: 15px;
+    }
+
+    .marquee {
+        white-space: nowrap;
+        display: inline-block;
+        font-size: 19px;
+        color: #fff;
+        padding-left: 100%; 
+        animation: marquee 15s linear infinite; 
     }
 
     .error {
@@ -43,7 +65,7 @@
                 align-items: center;
                 background: transparent;
                 border: none;
-                overflow: hidden;
+                overflow: visible;
                 position: relative;
 
                 input {
@@ -79,8 +101,8 @@
                     background: #333;
                     border-radius: 8px;
                     padding: 5px 10px;
-                    margin-right: 10px;
                     cursor: pointer;
+                    position: relative;
 
                     h2 {
                         font-size: 16px;
@@ -104,37 +126,39 @@
 
             .jettonList {
                 position: absolute;
-                top: calc(100% + 5px); 
-                right: 10px;
-                background: #333;
+                top: 100%;
+                right: 0;
+                background: #262626;
                 border-radius: 8px;
-                padding: 10px;
-                z-index: 1000;
-                width: 150px;
-                max-height: 200px;
+                padding: 3px;
+                z-index: 9999;
+                width: auto;
+                max-width: 120px;
+                max-height: 150px;
                 overflow-y: auto;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+                box-shadow: 0 2px 5px #0000004d;
 
                 .jettonItem {
                     display: flex;
                     align-items: center;
-                    padding: 8px;
+                    padding: 3.5px;
                     cursor: pointer;
                     border-radius: 5px;
+                    justify-content: flex-end;
 
                     &:hover {
                         background: #444;
                     }
 
                     .jettonImage {
-                        width: 20px;
-                        height: 20px;
+                        width: 25px;
+                        height: 25px;
                         border-radius: 50%;
-                        margin-right: 8px;
+                        margin-left: 5px;
                     }
 
                     span {
-                        font-size: 14px;
+                        font-size: 15px;
                         color: #fff;
                     }
                 }
@@ -174,7 +198,7 @@
             font-size: 14px;
             color: #888;
             margin-top: 5px;
-            margin-left: 15px;
+            margin-left: 5px;
         }
     }
 
@@ -187,22 +211,48 @@
 
     button {
         width: 100%;
-        padding: 14px;
-        background: #ff5722;
+        padding: 11px;
+        background: linear-gradient(90deg, #ffd700, #ffaa33, #ffd700);
         border: none;
         border-radius: 10px;
         color: #fff;
-        font-size: 18px;
+        font-size: 24px;
         cursor: pointer;
+        background-size: 200% 100%;
+        animation: gradientShift 3s ease infinite;
         transition: background 0.3s;
 
         &:disabled {
             background: #666;
             cursor: not-allowed;
+            animation: none;
         }
 
         &:not(:disabled):hover {
-            background: #e64a19;
+            background: linear-gradient(90deg, #ffea00, #ffbb66, #ffea00);
+            background-size: 200% 100%;
+            animation: gradientShift 2s ease infinite;
+        }
+    }
+
+    @keyframes gradientShift {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    @keyframes marquee {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-100%);
         }
     }
 }
