@@ -257,7 +257,7 @@ function InTg() {
                                     )}
                                 </div>
                                 <div className={styles.price}>
-                                    ≈ ${(isTonToJetton ? (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0) : (parseFloat(tonAmount) * tonPrice || 0)).toFixed(2)}
+                                    ≈ ${parseFloat(tonAmount) * tonPrice}
                                     <span className={styles.balance}>{isTonToJetton ? jettonBalance.toFixed(2) : tonBalance.toFixed(2)}</span>
                                 </div>
                             </div>
