@@ -10,12 +10,12 @@ import {
     updateAmounts,
     toggleSwapDirection,
 } from '../utils/swapLogic';
-import { FACTORY_ADDRESS, SIMPLE_COIN_ADDRESS, TON_PRICE_USD, SC_PRICE_USD, TON_TO_SC_RATE } from '../utils/constants';
+import { TON_PRICE_USD, SC_PRICE_USD, TON_TO_SC_RATE } from '../utils/constants';
 
 function InTg() {
     const [tonConnectUI] = useTonConnectUI();
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [_, setError] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(true);
     const wallet = useTonWallet();
     const [tonAmount, setTonAmount] = useState('');

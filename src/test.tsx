@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Factory, Asset, PoolType, VaultNative, ReadinessStatus, Vault } from '@dedust/sdk';
-import { Address, TonClient4, toNano, beginCell, Cell, address } from '@ton/ton';
+import { Factory, Asset, PoolType, ReadinessStatus, } from '@dedust/sdk';
+import { Address, TonClient4, toNano, beginCell,} from '@ton/ton';
 import { toUserFriendlyAddress, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { TonConnectButton } from '@tonconnect/ui-react';
 import { getJettonWalletAddress } from './tonapi';
-import styles from './style.module.scss';
 
 const SIMPLE_COIN_ADDRESS = 'EQB9QBqniFI0jOmw3PU6v1v4LU3Sivm9yPXDDB9Qf7cXTDft';
 
@@ -68,10 +67,6 @@ function App() {
             const amountIn = toNano('0.02');
             const gasAmount = toNano('0.1705'); 
 
-            const fulfillPayload = beginCell()
-              .storeAddress((Address.parse(toUserFriendlyAddress(wallet.account.address)))) 
-              .storeCoins(toNano(0.05))
-            .endCell();
 
             const swapPayload = beginCell()
                 .storeUint(0xea06185d, 32) 
