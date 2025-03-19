@@ -159,7 +159,7 @@ function InTg() {
                                     className={styles['swap-button']}
                                     onClick={() => toggleSwapDirection(setIsTonToJetton, setTonAmount, setJettonAmount)}
                                 >
-                                    ↕
+                                    <img src="/swap.png" alt="" />
                                 </button>
                                 <div className={styles.dividerLine}></div>
                             </div>
