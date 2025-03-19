@@ -177,7 +177,7 @@ function InTg() {
                                         type="number"
                                         value={isTonToJetton ? tonAmount : jettonAmount}
                                         onChange={(e) => updateAmounts(e.target.value, true, isTonToJetton, setTonAmount, setJettonAmount, selectedJetton.rateToTon)}
-                                        placeholder="0.0"
+                                        placeholder="0"
                                     />
                                     <div
                                         ref={topRef}
@@ -227,7 +227,7 @@ function InTg() {
                                         type="number"
                                         value={isTonToJetton ? jettonAmount : tonAmount}
                                         readOnly
-                                        placeholder="0.0"
+                                        placeholder="0.00"
                                     />
                                     <div
                                         ref={bottomRef}
@@ -257,7 +257,7 @@ function InTg() {
                                     )}
                                 </div>
                                 <div className={styles.price}>
-                                    ≈ ${parseFloat(tonAmount) * tonPrice}
+                                    ≈ ${(parseFloat(tonAmount) * tonPrice) || 0}
                                     <span className={styles.balance}>{isTonToJetton ? jettonBalance.toFixed(2) : tonBalance.toFixed(2)}</span>
                                 </div>
                             </div>
