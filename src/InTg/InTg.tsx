@@ -11,6 +11,7 @@ import {
     toggleSwapDirection,
 } from '../utils/swapLogic';
 import { TON, JETTONS, getTonPrice, getJettonPrice } from '../utils/constants';
+import Footer from '../Footer/Footer';
 
 function InTg() {
     const [tonConnectUI] = useTonConnectUI();
@@ -275,6 +276,7 @@ function InTg() {
                     )}
                 </div>
             </div>
+            <Footer />
         </>
     );
 }
