@@ -200,6 +200,9 @@
         }
 
         .price {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             font-size: 14px;
             color: #888;
             margin-top: 5px;
@@ -208,11 +211,19 @@
     }
 
     .rate {
+        margin-top: 16px;
         text-align: center;
         font-size: 14px;
-        color: #888;
         margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        span {
+            color: #888;
+        }
     }
+    
+
 
     button {
         width: 100%;

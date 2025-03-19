@@ -10,28 +10,66 @@ import {
     updateAmounts,
     toggleSwapDirection,
 } from '../utils/swapLogic';
-import { TON, JETTONS } from '../utils/constants';
+import { TON, JETTONS, getTonPrice, getJettonPrice } from '../utils/constants';
 
 function InTg() {
     const [tonConnectUI] = useTonConnectUI();
     const [isLoading, setIsLoading] = useState(false);
-    const [_, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(true);
     const wallet = useTonWallet();
+    const CONNECTED_WALLET = wallet?.account?.address;
     const [tonAmount, setTonAmount] = useState('');
     const [jettonAmount, setJettonAmount] = useState('');
     const [isTonToJetton, setIsTonToJetton] = useState(true);
     const [selectedJetton, setSelectedJetton] = useState(JETTONS[0]);
     const [showJettonListTop, setShowJettonListTop] = useState(false);
     const [showJettonListBottom, setShowJettonListBottom] = useState(false);
+    const [tonPrice, setTonPrice] = useState(TON.priceUsd);
+    const [jettons, setJettons] = useState(JETTONS);
+    const [tonBalance, setTonBalance] = useState(0);
+    const [jettonBalance, setJettonBalance] = useState(0);
 
-    const topRef = useRef<HTMLDivElement>(null);
-    const bottomRef = useRef<HTMLDivElement>(null);
-    const jettonListTopRef = useRef<HTMLDivElement>(null);
-    const jettonListBottomRef = useRef<HTMLDivElement>(null);
+    const topRef = useRef<HTMLDivElement | null>(null);
+    const bottomRef = useRef<HTMLDivElement | null>(null);
+    const jettonListTopRef = useRef<HTMLDivElement | null>(null);
+    const jettonListBottomRef = useRef<HTMLDivElement | null>(null);
 
     const tonClient = initializeTonClient();
     const factory = setupFactory(tonClient);
+
+    useEffect(() => {
+        const fetchTonPrice = async () => {
+            const price = await getTonPrice();
+            if (price) {
+                setTonPrice(price);
+            } else {
+                setError('Failed to fetch TON price');
+            }
+        };
+        fetchTonPrice();
+    }, []);
+
+    useEffect(() => {
+        const fetchJettonPrices = async () => {
+            const updatedJettons = await Promise.all(
+                JETTONS.map(async (jetton) => {
+                    const { price } = await getJettonPrice(jetton.address);
+                    return {
+                        ...jetton,
+                        priceUsd: price !== null ? price : jetton.priceUsd,
+                        rateToTon: price !== null && tonPrice ? tonPrice / price : jetton.rateToTon,
+                    };
+                })
+            );
+            setJettons(updatedJettons);
+            const updatedSelected = updatedJettons.find((j) => j.address === selectedJetton.address);
+            if (updatedSelected) {
+                setSelectedJetton(updatedSelected);
+            }
+        };
+        fetchJettonPrices();
+    }, [tonPrice]);
 
     useEffect(() => {
         const checkReadiness = async () => {
@@ -41,7 +79,6 @@ function InTg() {
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Unknown error during initialization');
                 setIsReady(true);
-                console.log('norm');
             }
         };
         checkReadiness();
@@ -50,7 +87,6 @@ function InTg() {
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
-
             if (
                 topRef.current &&
                 jettonListTopRef.current &&
@@ -59,7 +95,6 @@ function InTg() {
             ) {
                 setShowJettonListTop(false);
             }
-
             if (
                 bottomRef.current &&
                 jettonListBottomRef.current &&
@@ -69,15 +104,35 @@ function InTg() {
                 setShowJettonListBottom(false);
             }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        if (CONNECTED_WALLET) {
+            fetch(`https://tonapi.io/v2/accounts/${CONNECTED_WALLET}`)
+                .then(res => res.json())
+                .then(data => {
+                    const balance = data?.balance ? Number(data.balance) / 1e9 : 0;
+                    setTonBalance(balance);
+                })
+                .catch(() => setTonBalance(0));
+        }
+    }, [CONNECTED_WALLET]);
+
+    useEffect(() => {
+        if (CONNECTED_WALLET && selectedJetton.address) {
+            fetch(`https://tonapi.io/v2/accounts/${CONNECTED_WALLET}/jettons/${selectedJetton.address}?currencies=ton,usd,rub&supported_extensions=custom_payload`)
+                .then(res => res.json())
+                .then(data => {
+                    const balance = data?.balance ? Number(data.balance) / 1e9 : 0;
+                    setJettonBalance(balance);
+                })
+                .catch(() => setJettonBalance(0));
+        }
+    }, [CONNECTED_WALLET, selectedJetton.address]);
+
     const handleJettonSelect = (jetton: typeof JETTONS[0]) => {
-        console.log('Selected jetton:', jetton.name);
         setSelectedJetton(jetton);
         setJettonAmount('');
         setTonAmount('');
@@ -86,15 +141,18 @@ function InTg() {
     };
 
     const toggleJettonListTop = () => {
-        console.log('toggleJettonListTop called');
         setShowJettonListTop((prev) => !prev);
         setShowJettonListBottom(false);
     };
 
     const toggleJettonListBottom = () => {
-        console.log('toggleJettonListBottom called');
         setShowJettonListBottom((prev) => !prev);
         setShowJettonListTop(false);
+    };
+
+    const isInsufficientBalance = () => {
+        const inputAmount = parseFloat(isTonToJetton ? tonAmount : jettonAmount) || 0;
+        return isTonToJetton ? inputAmount > tonBalance : inputAmount > jettonBalance;
     };
 
     return (
@@ -109,7 +167,6 @@ function InTg() {
                         Simple Swap offers lower fees for exchanges. Be cautious: reward tokens may have additional swap percentages.
                     </div>
                 </div>
-
                 <div>
                     {isReady && (
                         <div className={styles.swapFields}>
@@ -135,7 +192,7 @@ function InTg() {
                                     </div>
                                     {showJettonListTop && !isTonToJetton && (
                                         <div ref={jettonListTopRef} className={styles.jettonList}>
-                                            {JETTONS.map((jetton) => (
+                                            {jettons.map((jetton) => (
                                                 <div
                                                     key={jetton.address}
                                                     className={styles.jettonItem}
@@ -149,10 +206,10 @@ function InTg() {
                                     )}
                                 </div>
                                 <div className={styles.price}>
-                                    ≈ ${(isTonToJetton ? (parseFloat(tonAmount) * TON.priceUsd || 0) : (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0)).toFixed(2)}
+                                    ≈ ${(isTonToJetton ? (parseFloat(tonAmount) * tonPrice || 0) : (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0)).toFixed(2)}
+                                    <span className={styles.balance}>{isTonToJetton ? tonBalance.toFixed(2) : jettonBalance.toFixed(2)}</span>
                                 </div>
                             </div>
-
                             <div className={styles.swapDivider}>
                                 <div className={styles.dividerLine}></div>
                                 <button
@@ -163,7 +220,6 @@ function InTg() {
                                 </button>
                                 <div className={styles.dividerLine}></div>
                             </div>
-
                             <div className={styles.field}>
                                 <div className={`${styles['input-wrapper']} ${styles.readonly}`}>
                                     <input
@@ -186,7 +242,7 @@ function InTg() {
                                     </div>
                                     {showJettonListBottom && isTonToJetton && (
                                         <div ref={jettonListBottomRef} className={styles.jettonList}>
-                                            {JETTONS.map((jetton) => (
+                                            {jettons.map((jetton) => (
                                                 <div
                                                     key={jetton.address}
                                                     className={styles.jettonItem}
@@ -200,18 +256,20 @@ function InTg() {
                                     )}
                                 </div>
                                 <div className={styles.price}>
-                                    ≈ ${(isTonToJetton ? (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0) : (parseFloat(tonAmount) * TON.priceUsd || 0)).toFixed(2)}
+                                    ≈ ${(isTonToJetton ? (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0) : (parseFloat(tonAmount) * tonPrice || 0)).toFixed(2)}
+                                    <span className={styles.balance}>{isTonToJetton ? jettonBalance.toFixed(2) : tonBalance.toFixed(2)}</span>
                                 </div>
                             </div>
-
-                            <div className={styles.rate}>1 TON = {selectedJetton.rateToTon.toFixed(2)} {selectedJetton.name}</div>
-                            <button
+                            <div className={styles.rate}>
+                                <span>1 TON = {selectedJetton.rateToTon.toFixed(2)} {selectedJetton.name}</span>
+                                <span>1 {selectedJetton.name} = ${selectedJetton.priceUsd.toFixed(5)}</span>
+                            </div>                            <button
                                 onClick={isTonToJetton
                                     ? () => handleSwapTon(tonConnectUI, wallet, tonAmount, setError, setIsLoading, factory, selectedJetton.address)
                                     : () => handleSwapJetton(tonConnectUI, wallet, jettonAmount, setError, setIsLoading, factory, selectedJetton.address)}
-                                disabled={isLoading || !tonConnectUI.connected || (!tonAmount && !jettonAmount)}
+                                disabled={isLoading || !tonConnectUI.connected || (!tonAmount && !jettonAmount) || isInsufficientBalance()}
                             >
-                                {isLoading ? 'Processing...' : `Swap`}
+                                {isLoading ? 'Processing...' : 'Swap'}
                             </button>
                         </div>
                     )}
