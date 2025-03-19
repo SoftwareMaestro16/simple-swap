@@ -65,18 +65,18 @@ export const JETTONS: Jetton[] = [
         priceUsd: 1, 
         rateToTon: TON.priceUsd / 1,
     },
-    {
-        name: 'ARNI',
-        address: 'EQAZzZzhBdrPwxFVQHWlMHbDY_eOk3LeUPr07VWdX4B0193M',
-        image: 'https://static.tildacdn.com/tild3163-6438-4631-a534-373165636364/ARNI_Logo.png',
-        priceUsd: 1, 
-        rateToTon: TON.priceUsd / 1,
-    },
-    {
-        name: 'JSI',
-        address: 'EQBJpyjYjsZ5xhqClAgaSqVHlgFtsJvclU-93Ah-LequH5uC',
-        image: 'https://i.ibb.co/RTNSCjrF/IMG-4242.png',
-        priceUsd: 1, 
-        rateToTon: TON.priceUsd / 1,
-    },
+    // {
+    //     name: 'ARNI',
+    //     address: 'EQAZzZzhBdrPwxFVQHWlMHbDY_eOk3LeUPr07VWdX4B0193M',
+    //     image: 'https://static.tildacdn.com/tild3163-6438-4631-a534-373165636364/ARNI_Logo.png',
+    //     priceUsd: 1, 
+    //     rateToTon: TON.priceUsd / 1,
+    // },
+    // {
+    //     name: 'JSI',
+    //     address: 'EQBJpyjYjsZ5xhqClAgaSqVHlgFtsJvclU-93Ah-LequH5uC',
+    //     image: 'https://i.ibb.co/RTNSCjrF/IMG-4242.png',
+    //     priceUsd: 1, 
+    //     rateToTon: TON.priceUsd / 1,
+    // },
 ];
