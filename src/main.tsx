@@ -25,12 +25,12 @@ createRoot(document.getElementById('root')!).render(
             connectButton: {
               background: '#FFD700', 
             },
-            accent: '#FFC107', 
-            telegramButton: '#FFEB3B', 
+            accent: '#FFD700', 
+            telegramButton: '#FFD700', 
             background: {
-              primary: '#FFF9C4',
-              secondary: '#FFECB3', 
-              tint: '#FFE082' 
+              primary: '#FFD700',
+              secondary: '#FFD700', 
+              tint: '#FFD700'
             }
           }
         },
