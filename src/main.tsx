@@ -30,7 +30,7 @@ createRoot(document.getElementById('root')!).render(
             background: {
               primary: '#ffaa33',
               secondary: '#ffaa33', 
-              tint: '#2b2b2b'
+              tint: '#fff238'
             }
           }
         },
