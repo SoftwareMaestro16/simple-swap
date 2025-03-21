@@ -187,21 +187,29 @@ export const handleSwapJetton = async (
 
 export const updateAmounts = (
     value: string,
-    isTopField: boolean,
+    isFrom: boolean,
     isTonToJetton: boolean,
     setTonAmount: (value: string) => void,
     setJettonAmount: (value: string) => void,
     rateToTon: number
 ) => {
-    if (isTopField) {
+    if (!rateToTon) return;
+    const amount = parseFloat(value) || 0;
+    if (isFrom) {
         if (isTonToJetton) {
             setTonAmount(value);
-            const ton = parseFloat(value) || 0;
-            setJettonAmount((ton * rateToTon).toFixed(4));
+            setJettonAmount((amount * rateToTon).toFixed(6));
         } else {
             setJettonAmount(value);
-            const jetton = parseFloat(value) || 0;
-            setTonAmount((jetton / rateToTon).toFixed(4));
+            setTonAmount((amount / rateToTon).toFixed(6));
+        }
+    } else {
+        if (isTonToJetton) {
+            setJettonAmount(value);
+            setTonAmount((amount / rateToTon).toFixed(6));
+        } else {
+            setTonAmount(value);
+            setJettonAmount((amount * rateToTon).toFixed(6));
         }
     }
 };

@@ -16,9 +16,10 @@ import Footer from '../Footer/Footer';
 function InTg() {
     const [tonConnectUI] = useTonConnectUI();
     const [isLoading, setIsLoading] = useState(false);
-    const [_, setError] = useState<string | null>(null); // Используем error
+    const [_, setError] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(true);
     const [isPriceLoading, setIsPriceLoading] = useState(true);
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
     const wallet = useTonWallet();
     const CONNECTED_WALLET = wallet?.account?.address;
     const [tonAmount, setTonAmount] = useState('');
@@ -71,7 +72,7 @@ function InTg() {
     };
 
     useEffect(() => {
-        const fetchPrices = async () => {
+        const fetchInitialData = async () => {
             setIsPriceLoading(true);
             const tonPriceResult = await fetchTonPriceWithRetry();
             if (tonPriceResult) {
@@ -80,10 +81,13 @@ function InTg() {
                 setJettons(updatedJettons);
                 const updatedSelected = updatedJettons.find((j) => j.address === selectedJetton.address);
                 if (updatedSelected) setSelectedJetton(updatedSelected);
+                setIsDataLoaded(true);
+            } else {
+                setError('Failed to load initial prices');
             }
             setIsPriceLoading(false);
         };
-        fetchPrices();
+        fetchInitialData();
     }, []);
 
     useEffect(() => {
@@ -96,10 +100,9 @@ function InTg() {
                 setIsReady(true);
             }
         };
-        checkReadiness();
-    }, [factory, selectedJetton]);
+        if (isDataLoaded) checkReadiness();
+    }, [factory, selectedJetton, isDataLoaded]);
 
-    // Добавляем useEffect для обработки кликов вне списка
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
@@ -197,9 +200,11 @@ function InTg() {
                     </div>
                 </div>
                 <div>
-                    {isPriceLoading ? (
+                    {isPriceLoading || !isDataLoaded ? (
+                        <div className={styles.loadingContainer}>
 <>
-</>                    ) : isReady ? (
+</>                        </div>
+                    ) : isReady ? (
                         <div className={styles.swapFields}>
                             <div className={styles.field}>
                                 <div className={styles['input-wrapper']}>
@@ -377,9 +382,10 @@ function InTg() {
                             </button>
                         </div>
                     ) : (
+                        <div className={styles.errorContainer}>
 <>
-</>  
-                  )}
+</>                        </div>
+                    )}
                 </div>
             </div>
             <Footer />
