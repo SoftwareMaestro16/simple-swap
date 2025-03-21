@@ -132,7 +132,7 @@ function InTg() {
                     const balance = data?.balance ? Number(data.balance) / 1e9 : 0;
                     setTonBalance(balance);
                 })
-                .catch((err) => {
+                .catch(() => {
                     setError('Failed to fetch TON balance');
                     setTonBalance(0);
                 });
@@ -149,7 +149,7 @@ function InTg() {
                     const balance = data?.balance ? Number(data.balance) / 1e9 : 0;
                     setJettonBalance(balance);
                 })
-                .catch((err) => {
+                .catch(() => {
                     setError('Failed to fetch Jetton balance');
                     setJettonBalance(0);
                 });
