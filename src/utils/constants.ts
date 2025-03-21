@@ -47,7 +47,7 @@ export interface Jetton {
 export const TON = {
     name: 'TON',
     image: 'https://cryptologos.cc/logos/toncoin-ton-logo.png',
-    priceUsd: 1, 
+    priceUsd: 0, 
 };
 
 export const JETTONS: Jetton[] = [
@@ -55,14 +55,28 @@ export const JETTONS: Jetton[] = [
         name: 'SC',
         address: 'EQB9QBqniFI0jOmw3PU6v1v4LU3Sivm9yPXDDB9Qf7cXTDft',
         image: 'https://simple-coin.xyz/sc.png',
-        priceUsd: 1,
+        priceUsd: 0,
         rateToTon: TON.priceUsd / 1, 
     },
     {
         name: 'MOMMY',
         address: 'EQC7i_DnbtjZHw8GTNv6C4Qq7RuAiYdg6L5NxIaJFj39PP56',
         image: 'https://i.ibb.co/BVqtXmJx/mommy.jpg',
-        priceUsd: 1, 
+        priceUsd: 0, 
+        rateToTon: TON.priceUsd / 1,
+    },
+    {
+        name: 'BOLT',
+        address: 'EQD0vdSA_NedR9uvbgN9EikRX-suesDxGeFg69XQMavfLqIw',
+        image: 'https://cache.tonapi.io/imgproxy/05DkTmM2Eu4YZX-ED0eQpRS8U1q7SbD3o1GC5r5ZTBw/rs:fill:200:200:1/g:no/aHR0cHM6Ly9jbG91ZGZsYXJlLWlwZnMuY29tL2lwZnMvUW1YNDdkb2RVZzFhY1hveFlEVUxXVE5mU2hYUlc1dUhyQ21vS1NVTlI5eEtRdw.webp',
+        priceUsd: 0, 
+        rateToTon: TON.priceUsd / 1,
+    },
+    {
+        name: 'GMOON',
+        address: 'EQCYbpjD20bBjX6w_n8ejVt43l_w4ON9E5Y5WqjJSe7d1KFo',
+        image: 'https://giveaways.moon-reward.tech/icon.png',
+        priceUsd: 0, 
         rateToTon: TON.priceUsd / 1,
     },
     // {

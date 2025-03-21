@@ -207,8 +207,20 @@ function InTg() {
                                     )}
                                 </div>
                                 <div className={styles.price}>
-                                    ≈ ${(isTonToJetton ? (parseFloat(tonAmount) * tonPrice || 0) : (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0)).toFixed(2)}
+                                ≈ ${(isTonToJetton ? (parseFloat(tonAmount) * tonPrice || 0) : (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0)).toFixed(2)}
+                                    <div>
+                                    <span 
+                                        className={styles.max}
+                                        onClick={() => {
+                                            const maxAmount = isTonToJetton ? tonBalance : jettonBalance;
+                                            updateAmounts(maxAmount.toString(), true, isTonToJetton, setTonAmount, setJettonAmount, selectedJetton.rateToTon);
+                                        }}
+                                    >
+                                        Max
+                                    </span>
                                     <span className={styles.balance}>{isTonToJetton ? tonBalance.toFixed(2) : jettonBalance.toFixed(2)}</span>
+                                
+                                    </div>
                                 </div>
                             </div>
                             <div className={styles.swapDivider}>
@@ -257,7 +269,7 @@ function InTg() {
                                     )}
                                 </div>
                                 <div className={styles.price}>
-                                    ≈ ${(parseFloat(tonAmount) * tonPrice) || 0}
+                                    ≈ ${(parseFloat(tonAmount) * tonPrice).toFixed(2) || 0}
                                     <span className={styles.balance}>{isTonToJetton ? jettonBalance.toFixed(2) : tonBalance.toFixed(2)}</span>
                                 </div>
                             </div>

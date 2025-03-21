@@ -207,6 +207,15 @@
             color: #888;
             margin-top: 5px;
             margin-left: 5px;
+
+            .max {
+                cursor: pointer;
+                color: #e7ae31; 
+                margin-right: 5px;
+                &:hover {
+                  text-decoration: underline;
+                }
+              }
         }
     }
 
