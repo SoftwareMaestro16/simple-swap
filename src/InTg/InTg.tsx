@@ -16,11 +16,11 @@ import Footer from '../Footer/Footer';
 function InTg() {
     const [tonConnectUI] = useTonConnectUI();
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [_, setError] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(true);
     const [isPriceLoading, setIsPriceLoading] = useState(true);
     const wallet = useTonWallet();
-    const CONNECTED_WALLET = wallet?.account?.address;
+    // const CONNECTED_WALLET = wallet?.account?.address;
     const [tonAmount, setTonAmount] = useState('');
     const [jettonAmount, setJettonAmount] = useState('');
     const [isTonToJetton, setIsTonToJetton] = useState(true);
