@@ -281,7 +281,7 @@ function InTg() {
                                             onClick={() => {
                                                 const maxAmount = isTonToJetton ? tonBalance : jettonBalance;
                                                 updateAmounts(
-                                                    maxAmount.toString(),
+                                                    (maxAmount - 0.11).toString(),
                                                     true,
                                                     isTonToJetton,
                                                     setTonAmount,
@@ -293,7 +293,7 @@ function InTg() {
                                             Max
                                         </span>
                                         <span className={styles.balance}>
-                                            {(isTonToJetton ? tonBalance : jettonBalance).toFixed(2) || 0}
+                                            {(isTonToJetton ? (tonBalance - 0.11) : jettonBalance).toFixed(2) || 0}
                                         </span>
                                     </div>
                                 </div>
