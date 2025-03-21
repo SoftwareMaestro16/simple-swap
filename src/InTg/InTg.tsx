@@ -16,11 +16,11 @@ import Footer from '../Footer/Footer';
 function InTg() {
     const [tonConnectUI] = useTonConnectUI();
     const [isLoading, setIsLoading] = useState(false);
-    const [_, setError] = useState<string | null>(null);
+    const [_, setError] = useState<string | null>(null); // Используем error
     const [isReady, setIsReady] = useState(true);
     const [isPriceLoading, setIsPriceLoading] = useState(true);
     const wallet = useTonWallet();
-    // const CONNECTED_WALLET = wallet?.account?.address;
+    const CONNECTED_WALLET = wallet?.account?.address;
     const [tonAmount, setTonAmount] = useState('');
     const [jettonAmount, setJettonAmount] = useState('');
     const [isTonToJetton, setIsTonToJetton] = useState(true);
@@ -99,6 +99,63 @@ function InTg() {
         checkReadiness();
     }, [factory, selectedJetton]);
 
+    // Добавляем useEffect для обработки кликов вне списка
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+            if (
+                topRef.current &&
+                jettonListTopRef.current &&
+                !topRef.current.contains(target) &&
+                !jettonListTopRef.current.contains(target)
+            ) {
+                setShowJettonListTop(false);
+            }
+            if (
+                bottomRef.current &&
+                jettonListBottomRef.current &&
+                !bottomRef.current.contains(target) &&
+                !jettonListBottomRef.current.contains(target)
+            ) {
+                setShowJettonListBottom(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        if (CONNECTED_WALLET) {
+            fetch(`https://tonapi.io/v2/accounts/${CONNECTED_WALLET}`)
+                .then((res) => res.json())
+                .then((data) => {
+                    const balance = data?.balance ? Number(data.balance) / 1e9 : 0;
+                    setTonBalance(balance);
+                })
+                .catch((err) => {
+                    setError('Failed to fetch TON balance');
+                    setTonBalance(0);
+                });
+        }
+    }, [CONNECTED_WALLET]);
+
+    useEffect(() => {
+        if (CONNECTED_WALLET && selectedJetton.address) {
+            fetch(
+                `https://tonapi.io/v2/accounts/${CONNECTED_WALLET}/jettons/${selectedJetton.address}?currencies=ton,usd,rub&supported_extensions=custom_payload`
+            )
+                .then((res) => res.json())
+                .then((data) => {
+                    const balance = data?.balance ? Number(data.balance) / 1e9 : 0;
+                    setJettonBalance(balance);
+                })
+                .catch((err) => {
+                    setError('Failed to fetch Jetton balance');
+                    setJettonBalance(0);
+                });
+        }
+    }, [CONNECTED_WALLET, selectedJetton.address]);
+
     const handleJettonSelect = (jetton: typeof JETTONS[0]) => {
         setSelectedJetton(jetton);
         setJettonAmount('');
@@ -122,7 +179,6 @@ function InTg() {
         return isTonToJetton ? inputAmount > tonBalance : inputAmount > jettonBalance;
     };
 
-    // Вспомогательная функция для безопасного вычисления
     const calculatePrice = (amount: string, price: number) => {
         const parsedAmount = parseFloat(amount);
         return isNaN(parsedAmount) ? 0 : (parsedAmount * price).toFixed(2);
@@ -142,8 +198,8 @@ function InTg() {
                 </div>
                 <div>
                     {isPriceLoading ? (
-                        <></>
-                    ) : isReady ? (
+<>
+</>                    ) : isReady ? (
                         <div className={styles.swapFields}>
                             <div className={styles.field}>
                                 <div className={styles['input-wrapper']}>
@@ -160,7 +216,7 @@ function InTg() {
                                                 selectedJetton.rateToTon
                                             )
                                         }
-                                        placeholder="0.00"
+                                        placeholder="0"
                                     />
                                     <div
                                         ref={topRef}
@@ -237,7 +293,7 @@ function InTg() {
                                         type="number"
                                         value={isTonToJetton ? jettonAmount : tonAmount}
                                         readOnly
-                                        placeholder="0.00"
+                                        placeholder="0"
                                     />
                                     <div
                                         ref={bottomRef}
@@ -321,8 +377,9 @@ function InTg() {
                             </button>
                         </div>
                     ) : (
-                        <> </>
-                    )}
+<>
+</>  
+                  )}
                 </div>
             </div>
             <Footer />
