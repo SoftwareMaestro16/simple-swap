@@ -18,7 +18,7 @@ function InTg() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(true);
-    const [isPriceLoading, setIsPriceLoading] = useState(true); // Новое состояние для загрузки цен
+    const [isPriceLoading, setIsPriceLoading] = useState(true);
     const wallet = useTonWallet();
     const CONNECTED_WALLET = wallet?.account?.address;
     const [tonAmount, setTonAmount] = useState('');
@@ -40,7 +40,6 @@ function InTg() {
     const tonClient = initializeTonClient();
     const factory = setupFactory(tonClient);
 
-    // Функция для получения цены TON с повторными попытками
     const fetchTonPriceWithRetry = async (retries = 3, delay = 2000): Promise<number | null> => {
         for (let i = 0; i < retries; i++) {
             const price = await getTonPrice();
@@ -51,7 +50,6 @@ function InTg() {
         return null;
     };
 
-    // Функция для получения цен Jetton с повторными попытками
     const fetchJettonPricesWithRetry = async (retries = 3, delay = 2000) => {
         const updatedJettons = await Promise.all(
             JETTONS.map(async (jetton) => {
@@ -66,7 +64,7 @@ function InTg() {
                     }
                     if (i < retries - 1) await new Promise((resolve) => setTimeout(resolve, delay));
                 }
-                return jetton; // Возвращаем исходный Jetton, если цена не получена
+                return jetton;
             })
         );
         return updatedJettons;
@@ -86,7 +84,7 @@ function InTg() {
             setIsPriceLoading(false);
         };
         fetchPrices();
-    }, []); // Запускаем только при монтировании
+    }, []);
 
     useEffect(() => {
         const checkReadiness = async () => {
@@ -100,8 +98,6 @@ function InTg() {
         };
         checkReadiness();
     }, [factory, selectedJetton]);
-
-    // Остальные useEffect для обработки кликов вне списка и балансов остаются без изменений
 
     const handleJettonSelect = (jetton: typeof JETTONS[0]) => {
         setSelectedJetton(jetton);
@@ -126,6 +122,12 @@ function InTg() {
         return isTonToJetton ? inputAmount > tonBalance : inputAmount > jettonBalance;
     };
 
+    // Вспомогательная функция для безопасного вычисления
+    const calculatePrice = (amount: string, price: number) => {
+        const parsedAmount = parseFloat(amount);
+        return isNaN(parsedAmount) ? 0 : (parsedAmount * price).toFixed(2);
+    };
+
     return (
         <>
             <div className={styles.tc}>
@@ -140,7 +142,8 @@ function InTg() {
                 </div>
                 <div>
                     {isPriceLoading ? (
-                        <></> ) : isReady ? (
+                        <></>
+                    ) : isReady ? (
                         <div className={styles.swapFields}>
                             <div className={styles.field}>
                                 <div className={styles['input-wrapper']}>
@@ -157,7 +160,7 @@ function InTg() {
                                                 selectedJetton.rateToTon
                                             )
                                         }
-                                        placeholder="0"
+                                        placeholder="0.00"
                                     />
                                     <div
                                         ref={topRef}
@@ -192,10 +195,9 @@ function InTg() {
                                 </div>
                                 <div className={styles.price}>
                                     ≈ $
-                                    {(isTonToJetton
-                                        ? parseFloat(tonAmount) * tonPrice || 0
-                                        : parseFloat(jettonAmount) * selectedJetton.priceUsd || 0
-                                    ).toFixed(2)}
+                                    {isTonToJetton
+                                        ? calculatePrice(tonAmount, tonPrice)
+                                        : calculatePrice(jettonAmount, selectedJetton.priceUsd)}
                                     <div>
                                         <span
                                             className={styles.max}
@@ -270,10 +272,9 @@ function InTg() {
                                 </div>
                                 <div className={styles.price}>
                                     ≈ $
-                                    {(isTonToJetton
-                                        ? parseFloat(jettonAmount) * selectedJetton.priceUsd || 0
-                                        : parseFloat(tonAmount) * tonPrice || 0
-                                    ).toFixed(2)}
+                                    {isTonToJetton
+                                        ? calculatePrice(jettonAmount, selectedJetton.priceUsd)
+                                        : calculatePrice(tonAmount, tonPrice)}
                                     <span className={styles.balance}>
                                         {(isTonToJetton ? jettonBalance : tonBalance).toFixed(2) || 0}
                                     </span>
@@ -320,7 +321,7 @@ function InTg() {
                             </button>
                         </div>
                     ) : (
-                        <div>Initializing...</div>
+                        <> </>
                     )}
                 </div>
             </div>

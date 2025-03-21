@@ -79,6 +79,13 @@ export const JETTONS: Jetton[] = [
         priceUsd: 0, 
         rateToTon: TON.priceUsd / 1,
     },
+    {
+        name: 'TSP',
+        address: 'EQAr6FVqQfktKsjhDhtk-sQnjXsOjehpf6Wr_TPozGbW4Dhx',
+        image: 'https://d121vty759npai.cloudfront.net/images/15da91530f7f41eb8e174f1e402867a8.jpeg',
+        priceUsd: 0, 
+        rateToTon: TON.priceUsd / 1,
+    },
     // {
     //     name: 'ARNI',
     //     address: 'EQAZzZzhBdrPwxFVQHWlMHbDY_eOk3LeUPr07VWdX4B0193M',
