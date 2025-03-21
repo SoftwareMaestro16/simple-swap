@@ -75,20 +75,36 @@ function InTg() {
         const fetchInitialData = async () => {
             setIsPriceLoading(true);
             const tonPriceResult = await fetchTonPriceWithRetry();
-            if (tonPriceResult) {
+            
+            if (tonPriceResult !== null) {
                 setTonPrice(tonPriceResult);
+                
                 const updatedJettons = await fetchJettonPricesWithRetry();
                 setJettons(updatedJettons);
-                const updatedSelected = updatedJettons.find((j) => j.address === selectedJetton.address);
-                if (updatedSelected) setSelectedJetton(updatedSelected);
+    
+                const updatedSelected = updatedJettons.find(j => j.address === selectedJetton.address);
+                if (updatedSelected) {
+                    setSelectedJetton(updatedSelected);
+                }
+    
                 setIsDataLoaded(true);
             } else {
                 setError('Failed to load initial prices');
             }
             setIsPriceLoading(false);
         };
+    
         fetchInitialData();
     }, []);
+    
+    useEffect(() => {
+        if (tonPrice && selectedJetton.priceUsd) {
+            setSelectedJetton((prev) => ({
+                ...prev,
+                rateToTon: tonPrice / selectedJetton.priceUsd,
+            }));
+        }
+    }, [tonPrice, selectedJetton.priceUsd]);
 
     useEffect(() => {
         const checkReadiness = async () => {
