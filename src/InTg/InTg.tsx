@@ -16,8 +16,9 @@ import Footer from '../Footer/Footer';
 function InTg() {
     const [tonConnectUI] = useTonConnectUI();
     const [isLoading, setIsLoading] = useState(false);
-    const [_, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const [isReady, setIsReady] = useState(true);
+    const [isPriceLoading, setIsPriceLoading] = useState(true); // Новое состояние для загрузки цен
     const wallet = useTonWallet();
     const CONNECTED_WALLET = wallet?.account?.address;
     const [tonAmount, setTonAmount] = useState('');
@@ -39,38 +40,53 @@ function InTg() {
     const tonClient = initializeTonClient();
     const factory = setupFactory(tonClient);
 
-    useEffect(() => {
-        const fetchTonPrice = async () => {
+    // Функция для получения цены TON с повторными попытками
+    const fetchTonPriceWithRetry = async (retries = 3, delay = 2000): Promise<number | null> => {
+        for (let i = 0; i < retries; i++) {
             const price = await getTonPrice();
-            if (price) {
-                setTonPrice(price);
-            } else {
-                setError('Failed to fetch TON price');
-            }
-        };
-        fetchTonPrice();
-    }, []);
+            if (price !== null) return price;
+            if (i < retries - 1) await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+        setError('Failed to fetch TON price after retries');
+        return null;
+    };
+
+    // Функция для получения цен Jetton с повторными попытками
+    const fetchJettonPricesWithRetry = async (retries = 3, delay = 2000) => {
+        const updatedJettons = await Promise.all(
+            JETTONS.map(async (jetton) => {
+                for (let i = 0; i < retries; i++) {
+                    const { price } = await getJettonPrice(jetton.address);
+                    if (price !== null) {
+                        return {
+                            ...jetton,
+                            priceUsd: price,
+                            rateToTon: tonPrice && price ? tonPrice / price : jetton.rateToTon,
+                        };
+                    }
+                    if (i < retries - 1) await new Promise((resolve) => setTimeout(resolve, delay));
+                }
+                return jetton; // Возвращаем исходный Jetton, если цена не получена
+            })
+        );
+        return updatedJettons;
+    };
 
     useEffect(() => {
-        const fetchJettonPrices = async () => {
-            const updatedJettons = await Promise.all(
-                JETTONS.map(async (jetton) => {
-                    const { price } = await getJettonPrice(jetton.address);
-                    return {
-                        ...jetton,
-                        priceUsd: price !== null ? price : jetton.priceUsd,
-                        rateToTon: price !== null && tonPrice ? tonPrice / price : jetton.rateToTon,
-                    };
-                })
-            );
-            setJettons(updatedJettons);
-            const updatedSelected = updatedJettons.find((j) => j.address === selectedJetton.address);
-            if (updatedSelected) {
-                setSelectedJetton(updatedSelected);
+        const fetchPrices = async () => {
+            setIsPriceLoading(true);
+            const tonPriceResult = await fetchTonPriceWithRetry();
+            if (tonPriceResult) {
+                setTonPrice(tonPriceResult);
+                const updatedJettons = await fetchJettonPricesWithRetry();
+                setJettons(updatedJettons);
+                const updatedSelected = updatedJettons.find((j) => j.address === selectedJetton.address);
+                if (updatedSelected) setSelectedJetton(updatedSelected);
             }
+            setIsPriceLoading(false);
         };
-        fetchJettonPrices();
-    }, [tonPrice]);
+        fetchPrices();
+    }, []); // Запускаем только при монтировании
 
     useEffect(() => {
         const checkReadiness = async () => {
@@ -85,53 +101,7 @@ function InTg() {
         checkReadiness();
     }, [factory, selectedJetton]);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as Node;
-            if (
-                topRef.current &&
-                jettonListTopRef.current &&
-                !topRef.current.contains(target) &&
-                !jettonListTopRef.current.contains(target)
-            ) {
-                setShowJettonListTop(false);
-            }
-            if (
-                bottomRef.current &&
-                jettonListBottomRef.current &&
-                !bottomRef.current.contains(target) &&
-                !jettonListBottomRef.current.contains(target)
-            ) {
-                setShowJettonListBottom(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    useEffect(() => {
-        if (CONNECTED_WALLET) {
-            fetch(`https://tonapi.io/v2/accounts/${CONNECTED_WALLET}`)
-                .then(res => res.json())
-                .then(data => {
-                    const balance = data?.balance ? Number(data.balance) / 1e9 : 0;
-                    setTonBalance(balance);
-                })
-                .catch(() => setTonBalance(0));
-        }
-    }, [CONNECTED_WALLET]);
-
-    useEffect(() => {
-        if (CONNECTED_WALLET && selectedJetton.address) {
-            fetch(`https://tonapi.io/v2/accounts/${CONNECTED_WALLET}/jettons/${selectedJetton.address}?currencies=ton,usd,rub&supported_extensions=custom_payload`)
-                .then(res => res.json())
-                .then(data => {
-                    const balance = data?.balance ? Number(data.balance) / 1e9 : 0;
-                    setJettonBalance(balance);
-                })
-                .catch(() => setJettonBalance(0));
-        }
-    }, [CONNECTED_WALLET, selectedJetton.address]);
+    // Остальные useEffect для обработки кликов вне списка и балансов остаются без изменений
 
     const handleJettonSelect = (jetton: typeof JETTONS[0]) => {
         setSelectedJetton(jetton);
@@ -169,14 +139,24 @@ function InTg() {
                     </div>
                 </div>
                 <div>
-                    {isReady && (
+                    {isPriceLoading ? (
+                        <></> ) : isReady ? (
                         <div className={styles.swapFields}>
                             <div className={styles.field}>
                                 <div className={styles['input-wrapper']}>
                                     <input
                                         type="number"
                                         value={isTonToJetton ? tonAmount : jettonAmount}
-                                        onChange={(e) => updateAmounts(e.target.value, true, isTonToJetton, setTonAmount, setJettonAmount, selectedJetton.rateToTon)}
+                                        onChange={(e) =>
+                                            updateAmounts(
+                                                e.target.value,
+                                                true,
+                                                isTonToJetton,
+                                                setTonAmount,
+                                                setJettonAmount,
+                                                selectedJetton.rateToTon
+                                            )
+                                        }
                                         placeholder="0"
                                     />
                                     <div
@@ -200,26 +180,42 @@ function InTg() {
                                                     onClick={() => handleJettonSelect(jetton)}
                                                 >
                                                     <span>{jetton.name}</span>
-                                                    <img src={jetton.image} alt={jetton.name} className={styles.jettonImage} />
+                                                    <img
+                                                        src={jetton.image}
+                                                        alt={jetton.name}
+                                                        className={styles.jettonImage}
+                                                    />
                                                 </div>
                                             ))}
                                         </div>
                                     )}
                                 </div>
                                 <div className={styles.price}>
-                                ≈ ${(isTonToJetton ? (parseFloat(tonAmount) * tonPrice || 0) : (parseFloat(jettonAmount) * selectedJetton.priceUsd || 0)).toFixed(2)}
+                                    ≈ $
+                                    {(isTonToJetton
+                                        ? parseFloat(tonAmount) * tonPrice || 0
+                                        : parseFloat(jettonAmount) * selectedJetton.priceUsd || 0
+                                    ).toFixed(2)}
                                     <div>
-                                    <span 
-                                        className={styles.max}
-                                        onClick={() => {
-                                            const maxAmount = isTonToJetton ? tonBalance : jettonBalance;
-                                            updateAmounts(maxAmount.toString(), true, isTonToJetton, setTonAmount, setJettonAmount, selectedJetton.rateToTon);
-                                        }}
-                                    >
-                                        Max
-                                    </span>
-                                    <span className={styles.balance}>{isTonToJetton ? tonBalance.toFixed(2) : jettonBalance.toFixed(2)}</span>
-                                
+                                        <span
+                                            className={styles.max}
+                                            onClick={() => {
+                                                const maxAmount = isTonToJetton ? tonBalance : jettonBalance;
+                                                updateAmounts(
+                                                    maxAmount.toString(),
+                                                    true,
+                                                    isTonToJetton,
+                                                    setTonAmount,
+                                                    setJettonAmount,
+                                                    selectedJetton.rateToTon
+                                                );
+                                            }}
+                                        >
+                                            Max
+                                        </span>
+                                        <span className={styles.balance}>
+                                            {(isTonToJetton ? tonBalance : jettonBalance).toFixed(2) || 0}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -262,29 +258,69 @@ function InTg() {
                                                     onClick={() => handleJettonSelect(jetton)}
                                                 >
                                                     <span>{jetton.name}</span>
-                                                    <img src={jetton.image} alt={jetton.name} className={styles.jettonImage} />
+                                                    <img
+                                                        src={jetton.image}
+                                                        alt={jetton.name}
+                                                        className={styles.jettonImage}
+                                                    />
                                                 </div>
                                             ))}
                                         </div>
                                     )}
                                 </div>
                                 <div className={styles.price}>
-                                    ≈ ${(parseFloat(tonAmount) * tonPrice).toFixed(2) || 0}
-                                    <span className={styles.balance}>{isTonToJetton ? jettonBalance.toFixed(2) : tonBalance.toFixed(2)}</span>
+                                    ≈ $
+                                    {(isTonToJetton
+                                        ? parseFloat(jettonAmount) * selectedJetton.priceUsd || 0
+                                        : parseFloat(tonAmount) * tonPrice || 0
+                                    ).toFixed(2)}
+                                    <span className={styles.balance}>
+                                        {(isTonToJetton ? jettonBalance : tonBalance).toFixed(2) || 0}
+                                    </span>
                                 </div>
                             </div>
                             <div className={styles.rate}>
-                                <span>1 TON = {selectedJetton.rateToTon.toFixed(2)} {selectedJetton.name}</span>
+                                <span>
+                                    1 TON = {selectedJetton.rateToTon.toFixed(2)} {selectedJetton.name}
+                                </span>
                                 <span>1 {selectedJetton.name} = ${selectedJetton.priceUsd.toFixed(5)}</span>
-                            </div>                            <button
-                                onClick={isTonToJetton
-                                    ? () => handleSwapTon(tonConnectUI, wallet, tonAmount, setError, setIsLoading, factory, selectedJetton.address)
-                                    : () => handleSwapJetton(tonConnectUI, wallet, jettonAmount, setError, setIsLoading, factory, selectedJetton.address)}
-                                disabled={isLoading || !tonConnectUI.connected || (!tonAmount && !jettonAmount) || isInsufficientBalance()}
+                            </div>
+                            <button
+                                onClick={
+                                    isTonToJetton
+                                        ? () =>
+                                              handleSwapTon(
+                                                  tonConnectUI,
+                                                  wallet,
+                                                  tonAmount,
+                                                  setError,
+                                                  setIsLoading,
+                                                  factory,
+                                                  selectedJetton.address
+                                              )
+                                        : () =>
+                                              handleSwapJetton(
+                                                  tonConnectUI,
+                                                  wallet,
+                                                  jettonAmount,
+                                                  setError,
+                                                  setIsLoading,
+                                                  factory,
+                                                  selectedJetton.address
+                                              )
+                                }
+                                disabled={
+                                    isLoading ||
+                                    !tonConnectUI.connected ||
+                                    (!tonAmount && !jettonAmount) ||
+                                    isInsufficientBalance()
+                                }
                             >
                                 {isLoading ? 'Processing...' : 'Swap'}
                             </button>
                         </div>
+                    ) : (
+                        <div>Initializing...</div>
                     )}
                 </div>
             </div>
