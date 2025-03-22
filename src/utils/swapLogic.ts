@@ -170,7 +170,7 @@ export const handleSwapJetton = async (
             validUntil: Math.floor(Date.now() / 1000) + 60,
             messages: [{
                 address: jwAddress.toString(),
-                amount: toNano('0.145').toString(),
+                amount: toNano('0.155').toString(),
                 payload: swapPayload.toBoc().toString('base64')
             }]
         };
