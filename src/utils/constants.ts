@@ -107,13 +107,7 @@ export const JETTONS: Jetton[] = [
         priceUsd: 0, 
         rateToTon: TON.priceUsd / 1,
     },
-    {
-        name: 'MED',
-        address: 'EQAinL89RPbfhofyrhRsoU6L9_awtKhXTkraG9b7Bo_3HhSb',
-        image: 'https://bee-ton.ru/wp-content/uploads/2024/04/med.png',
-        priceUsd: 0, 
-        rateToTon: TON.priceUsd / 1,
-    },
+    
     // {
     //     name: 'ARNI',
     //     address: 'EQAZzZzhBdrPwxFVQHWlMHbDY_eOk3LeUPr07VWdX4B0193M',
