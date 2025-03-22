@@ -3,7 +3,7 @@ import axios from 'axios';
 export const TON_CLIENT_ENDPOINT = 'https://mainnet-v4.tonhubapi.com';
 export const FACTORY_ADDRESS = 'EQBfBWT7X2BHg9tXAxzhz2aKiNTU1tpt5NsiK0uSDW_YAJ67';
 export const GAS_AMOUNT_TON = '0.0905';
-export const GAS_AMOUNT_JETTON = '0.095';
+export const GAS_AMOUNT_JETTON = '0.115';
 
 export async function getTonPrice(): Promise<number | null> {
     const API_URL = 'https://api.geckoterminal.com/api/v2/networks/ton/tokens/EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c';
