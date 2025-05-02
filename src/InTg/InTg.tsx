@@ -399,7 +399,7 @@ function InTg() {
                             </button>
                             
                         </div>
-                        <h2 className='att'>Attention: Exchange no more than 5 TON</h2>
+                        <h3 className={styles.att}>Attention: Exchange no more than 5 TON</h3>
                         </>
                     ) : (
                         <div className={styles.errorContainer}>
