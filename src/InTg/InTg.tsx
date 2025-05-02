@@ -396,6 +396,7 @@ function InTg() {
                             >
                                 {isLoading ? 'Processing...' : 'Swap'}
                             </button>
+                            <h2 className='att'>Attention: Exchange no more than 5 TON</h2>
                         </div>
                     ) : (
                         <div className={styles.errorContainer}>
